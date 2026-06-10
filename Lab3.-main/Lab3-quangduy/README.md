@@ -1,166 +1,251 @@
-# LAB 3: AIoT Anomaly Detection & Event Intelligence
+# LAB 3: AIOT ANOMALY DETECTION & EVENT INTELLIGENCE
 
-Dự án minh họa pipeline phát hiện bất thường cho chuỗi thời gian IoT, từ dữ liệu telemetry đến mô hình anomaly detection, event log và API triển khai bằng FastAPI.
+### Hệ thống phát hiện bất thường và quản lý sự kiện trong môi trường AIoT
 
-## Mục tiêu
+---
 
-- Tải hoặc dùng dữ liệu mẫu từ Numenta Anomaly Benchmark (NAB).
-- Tạo đặc trưng thời gian và rolling window cho telemetry.
-- Huấn luyện và đánh giá hai hướng phát hiện bất thường:
-  - Isolation Forest.
-  - Autoencoder demo bằng `MLPRegressor`.
-- Chuyển `anomaly_score` thành `event_type`, `severity`, `decision`.
-- Lưu kết quả ra file CSV/JSON và triển khai API `/detect-anomaly`.
+## 1. Giới thiệu
 
-## Luồng xử lý
+Đề tài xây dựng hệ thống AIoT nhằm:
+
+* Giám sát dữ liệu telemetry từ thiết bị IoT.
+* Phát hiện các giá trị bất thường bằng mô hình Machine Learning.
+* Phân loại sự kiện theo mức độ nghiêm trọng.
+* Sinh cảnh báo và decision log tự động.
+* Triển khai mô hình dự đoán bằng FastAPI.
+
+---
+
+## Pipeline hệ thống
 
 ```text
-Clean telemetry
--> feature window
--> anomaly model
--> anomaly_score
--> threshold
--> event_type
--> severity
--> decision
--> anomaly_event_log.csv
--> FastAPI /detect-anomaly
+Telemetry Data
+    ↓
+Data Preprocessing
+    ↓
+Feature Engineering
+    ↓
+Train Anomaly Model
+    ↓
+Anomaly Scoring
+    ↓
+Event Classification
+    ↓
+Decision Layer
+    ↓
+FastAPI Deployment
 ```
 
-## Cấu trúc thư mục
+---
+
+## Cấu trúc project
 
 ```text
 lab3_aiot_anomaly_event_intelligence_v3/
-├── data/                         # dataset public hoặc sample fallback
-├── diagrams/                     # sơ đồ pipeline
-├── figures/                      # biểu đồ kết quả
-├── models/                       # model .joblib sau khi train
-├── notebooks/                    # notebook hướng dẫn
-├── outputs/                      # metrics, predictions, event log, API result
-├── reports/                      # báo cáo kết quả chạy thực tế
+│
+├── data/
+│
+├── diagrams/
+│
+├── figures/
+│
+├── models/
+│
+├── notebooks/
+│
+├── outputs/
+│
+├── reports/
+│
 ├── src/
-│   ├── app.py                    # FastAPI deploy model
-│   ├── download_data.py          # tải dữ liệu NAB
-│   ├── plot_results.py           # vẽ biểu đồ
-│   ├── test_api.py               # test API qua local server
-│   ├── test_api_local.py         # test logic API không cần mở port
-│   ├── train_anomaly.py          # train/test model
-│   └── utils.py                  # hàm dùng chung
+│   ├── app.py
+│   ├── download_data.py
+│   ├── plot_results.py
+│   ├── test_api.py
+│   ├── test_api_local.py
+│   ├── train_anomaly.py
+│   └── utils.py
+│
 └── requirements.txt
 ```
 
-## Dataset
+---
 
-Dự án dùng dataset public từ NAB:
+## 2. Dataset
 
-- Dataset: `ambient_temperature_system_failure.csv`
-- Nguồn: <https://github.com/numenta/NAB/tree/master/data/realKnownCause>
-- Raw CSV: <https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/ambient_temperature_system_failure.csv>
-- Label windows: <https://raw.githubusercontent.com/numenta/NAB/master/labels/combined_windows.json>
-
-Nếu không có Internet, script sẽ dùng file sample có sẵn trong `data/`.
-
-## Chạy pipeline
-
-Tải dữ liệu hoặc dùng fallback sample:
-
-```bash
-python src/download_data.py
-```
-
-Huấn luyện và đánh giá model:
-
-```bash
-python src/train_anomaly.py
-```
-
-Vẽ biểu đồ:
-
-```bash
-python src/plot_results.py
-```
-
-Các file kết quả chính:
+### File dữ liệu chính
 
 ```text
-models/anomaly_model_bundle_iforest_v2.joblib
+data/ambient_temperature_system_failure.csv
+```
+
+### Nguồn dữ liệu
+
+Dự án sử dụng bộ dữ liệu công khai từ NAB (Numenta Anomaly Benchmark) phục vụ nghiên cứu phát hiện bất thường trên chuỗi thời gian.
+
+### Các trường dữ liệu
+
+* timestamp
+* value
+* device_id
+* anomaly_label
+
+---
+
+## 3. Xử lý dữ liệu
+
+Hệ thống thực hiện:
+
+* Làm sạch dữ liệu telemetry.
+* Chuyển đổi định dạng thời gian.
+* Tạo rolling window.
+* Trích xuất đặc trưng thống kê.
+* Chuẩn bị tập dữ liệu cho mô hình AI.
+
+### Output sinh ra
+
+```text
+outputs/feature_dataset.csv
+outputs/telemetry_clean.csv
+```
+
+---
+
+## 4. AI Model
+
+### Các mô hình sử dụng
+
+```text
+Isolation Forest
+MLP Autoencoder (Demo)
+```
+
+### Chia dữ liệu
+
+* Train Dataset
+* Test Dataset
+
+### Output model
+
+```text
 models/isolation_forest_iforest_v1.joblib
 models/mlp_autoencoder_demo.joblib
+models/anomaly_model_bundle_iforest_v2.joblib
+```
+
+### File đánh giá
+
+```text
 outputs/iforest_metrics.json
 outputs/autoencoder_metrics.json
-outputs/iforest_test_predictions.csv
-outputs/autoencoder_test_predictions.csv
-outputs/anomaly_event_log.csv
-figures/anomaly_detection_result.png
-figures/anomaly_score_over_time.png
 ```
 
-## Chạy notebook
+---
 
-```bash
-jupyter notebook notebooks/01_anomaly_detection_event_intelligence.ipynb
-```
+## 5. Anomaly Detection
 
-## Chạy API
+Hệ thống sử dụng:
 
-Sau khi đã train model:
+* Isolation Forest Detection
+* Reconstruction Error Detection
+* Threshold-based Classification
+
+### Mục đích
+
+* Phát hiện dữ liệu bất thường.
+* Hỗ trợ giám sát hệ thống IoT.
+* Tạo cảnh báo sớm khi xuất hiện sự cố.
+* Hỗ trợ ra quyết định tự động.
+
+---
+
+## 6. FastAPI Deployment
+
+### Chạy API
 
 ```bash
 uvicorn src.app:app --reload
 ```
 
-Mở tài liệu API:
+### Swagger Docs
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-Test API ở terminal khác:
+### API Endpoints
 
-```bash
-python src/test_api.py
+| Endpoint          | Chức năng                         |
+| ----------------- | --------------------------------- |
+| `/health`         | Kiểm tra trạng thái API           |
+| `/model-info`     | Hiển thị thông tin mô hình        |
+| `/detect-anomaly` | Phát hiện bất thường từ telemetry |
+
+---
+
+## 7. Output Files
+
+```text
+outputs/
+├── iforest_metrics.json
+├── autoencoder_metrics.json
+├── iforest_test_predictions.csv
+├── autoencoder_test_predictions.csv
+├── anomaly_event_log.csv
+└── api_test_result.json
+
+models/
+├── isolation_forest_iforest_v1.joblib
+├── mlp_autoencoder_demo.joblib
+└── anomaly_model_bundle_iforest_v2.joblib
+
+figures/
+├── anomaly_detection_result.png
+└── anomaly_score_over_time.png
 ```
 
-Nếu không muốn mở local port:
+---
 
-```bash
-python src/test_api_local.py
+## 8. Decision Rule
+
+### Rule 1
+
+```text
+anomaly_score > threshold
 ```
 
-## Endpoint chính
+→ CRITICAL_EVENT
 
-### `GET /health`
+---
 
-Kiểm tra trạng thái API và model.
+### Rule 2
 
-### `GET /model-info`
-
-Trả thông tin model, threshold, feature columns và metrics nếu có.
-
-### `POST /detect-anomaly`
-
-Input là danh sách telemetry gần nhất:
-
-```json
-{
-  "history": [
-    {
-      "timestamp": "2013-07-05 09:00:00",
-      "value": 27.5,
-      "device_id": "room_temp_01"
-    }
-  ]
-}
+```text
+anomaly_score gần ngưỡng cảnh báo
 ```
 
-Output gồm `anomaly_score`, `threshold_used`, `is_anomaly`, `event_type`, `severity`, `decision` và thông tin kiểm tra API.
+→ WARNING_EVENT
 
-## Kiểm tra hoàn thành
+---
 
-- Notebook chạy hết không lỗi.
-- Có metrics trong `outputs/iforest_metrics.json` và `outputs/autoencoder_metrics.json`.
-- Có event log `outputs/anomaly_event_log.csv`.
-- Có kết quả test API `outputs/api_test_result.json`.
-- Có biểu đồ trong `figures/`.
-- API `/health` trả `model_loaded: true`.
-- API `/detect-anomaly` trả đủ `anomaly_score`, `event_type`, `severity` và `decision`.
+### Rule 3
+
+```text
+Normal telemetry
+```
+
+→ NORMAL_OPERATION
+
+---
+
+## 9. Kết quả đạt được
+
+Hệ thống đã:
+
+* Xây dựng pipeline AIoT phát hiện bất thường hoàn chỉnh.
+* Huấn luyện thành công mô hình Isolation Forest.
+* Mô phỏng Autoencoder để đánh giá dữ liệu bất thường.
+* Sinh event log và decision log tự động.
+* Triển khai API bằng FastAPI.
+* Trực quan hóa kết quả bằng biểu đồ.
+* Hỗ trợ giám sát và cảnh báo sự cố trong môi trường IoT.
